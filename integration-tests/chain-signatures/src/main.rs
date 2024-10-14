@@ -1,6 +1,14 @@
+use std::fs::File;
+use std::io::Write;
+use std::str::FromStr;
+use std::vec;
+
 use clap::Parser;
 use integration_tests_chain_signatures::containers::DockerClient;
 use integration_tests_chain_signatures::{dry_run, run, utils, MultichainConfig};
+use mpc_contract::primitives::SignRequest;
+use near_account_id::AccountId;
+use serde_json::json;
 use tokio::signal;
 use tracing_subscriber::EnvFilter;
 
@@ -15,6 +23,8 @@ enum Cli {
     },
     /// Spin up dependent services but not mpc nodes
     DepServices,
+    /// Example of commands to interact with the contract
+    ContractCommands,
 }
 
 #[tokio::main]
@@ -77,6 +87,59 @@ async fn main() -> anyhow::Result<()> {
             signal::ctrl_c().await.expect("Failed to listen for event");
             println!("Received Ctrl-C");
             println!("Stopped dependency services");
+        }
+        Cli::ContractCommands => {
+            println!("Building an example contract command");
+            let path_to_args_example = "../../chain-signatures/contract/src/json_args.sh";
+            let mut file = File::create(path_to_args_example)?;
+            let mut commands: Vec<String> = vec![];
+            let contract_account_id = AccountId::from_str("v1.signer-dev.testnet").unwrap();
+            let caller_account_id = AccountId::from_str("alexkushnir.testnet").unwrap();
+
+            let sign_request = SignRequest {
+                payload: [
+                    12, 1, 2, 0, 4, 5, 6, 8, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+                    22, 23, 24, 25, 26, 27, 28, 29, 30, 44,
+                ],
+                path: "test".into(),
+                key_version: 0,
+            };
+
+            let request_json = format!(
+                "'{}'",
+                serde_json::to_string(&json!({"request": sign_request})).unwrap()
+            );
+
+            let sign_command = format!(
+                "near call {} sign {} --accountId {} --gas 300000000000000 --deposit 1",
+                contract_account_id, request_json, caller_account_id
+            );
+
+            commands.push(sign_command.clone());
+
+            let public_key_command = format!(
+                "near call {} public_key --accountId {} --gas 300000000000000 --deposit 1",
+                contract_account_id, caller_account_id
+            );
+
+            commands.push(public_key_command.clone());
+
+            let derived_pub_key_json = format!(
+                "'{}'",
+                serde_json::to_string(&json!({"path": "test","predecessor": caller_account_id})).unwrap()
+            );
+
+            let derived_public_key_command = format!(
+                "near call {} derived_public_key {} --accountId {} --gas 300000000000000 --deposit 1",
+                contract_account_id, derived_pub_key_json, caller_account_id
+            );
+
+            commands.push(derived_public_key_command.clone());
+
+            for arg in commands {
+                file.write_all(arg.as_bytes())?;
+                file.write_all("\n\n".as_bytes())?;
+            }
         }
     }
 
