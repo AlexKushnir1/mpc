@@ -6,11 +6,13 @@ use std::vec;
 use clap::Parser;
 use integration_tests_chain_signatures::containers::DockerClient;
 use integration_tests_chain_signatures::{dry_run, run, utils, MultichainConfig};
-use mpc_contract::primitives::SignRequest;
 use near_account_id::AccountId;
+use near_crypto::PublicKey;
 use serde_json::json;
 use tokio::signal;
 use tracing_subscriber::EnvFilter;
+
+mod commands;
 
 #[derive(Parser, Debug)]
 enum Cli {
@@ -89,54 +91,94 @@ async fn main() -> anyhow::Result<()> {
             println!("Stopped dependency services");
         }
         Cli::ContractCommands => {
-            println!("Building an example contract command");
-            let path_to_args_example = "../../chain-signatures/contract/src/json_args.sh";
-            let mut file = File::create(path_to_args_example)?;
-            let mut commands: Vec<String> = vec![];
+            println!("Building a doc with example commands");
+            let path = "../../chain-signatures/contract/EXAMPLE.md";
+            let mut file = File::create(path)?;
+            let mut doc: Vec<String> = vec![];
             let contract_account_id = AccountId::from_str("v1.signer-dev.testnet").unwrap();
-            let caller_account_id = AccountId::from_str("alexkushnir.testnet").unwrap();
+            let caller_account_id = AccountId::from_str("v1.signer-dev.testnet").unwrap();
+            let public_key: PublicKey = "ed25519:J75xXmF7WUPS3xCm3hy2tgwLCKdYM1iJd4BWF8sWVnae"
+                .parse()
+                .unwrap();
 
-            let sign_request = SignRequest {
-                payload: [
-                    12, 1, 2, 0, 4, 5, 6, 8, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
-                    22, 23, 24, 25, 26, 27, 28, 29, 30, 44,
-                ],
-                path: "test".into(),
-                key_version: 0,
-            };
+            doc.push(format!(
+                "# Iteracting with contract using NEAR CLI\nAll data is fake and used for example purposes\nIt's necessary to update script after contract API changes\n## User contract API"
+            ));
 
-            let request_json = format!(
-                "'{}'",
-                serde_json::to_string(&json!({"request": sign_request})).unwrap()
-            );
+            doc.push(commands::sing_command(
+                &contract_account_id,
+                &caller_account_id,
+            ));
+            doc.push(format!("near view {} public_key", contract_account_id));
 
-            let sign_command = format!(
-                "near call {} sign {} --accountId {} --gas 300000000000000 --deposit 1",
-                contract_account_id, request_json, caller_account_id
-            );
+            doc.push(format!(
+                "near view {} derived_public_key {}",
+                contract_account_id,
+                serde_json::to_string(&json!({"path": "test","predecessor": caller_account_id}))
+                    .unwrap()
+            ));
 
-            commands.push(sign_command.clone());
+            doc.push(format!(
+                "near view {} latest_key_version",
+                contract_account_id
+            ));
 
-            let public_key_command = format!(
-                "near call {} public_key --accountId {} --gas 300000000000000 --deposit 1",
+            doc.push(format!(
+                "near view {} experimental_signature_deposit",
+                contract_account_id
+            ));
+
+            doc.push(format!(
+                "\n## Node API\n\n{}\n\n{}",
+                commands::respond_command(&contract_account_id, &caller_account_id,),
+                commands::join_command(&contract_account_id, &caller_account_id,)
+            ));
+
+            doc.push(format!(
+                "near call {} vote_join '{{\"candidate\":\"{}\"}}' --accountId {} --gas 300000000000000",
+                contract_account_id, caller_account_id, caller_account_id
+            ));
+
+            doc.push(format!(
+                "near call {} vote_leave '{{\"kick\":\"{}\"}}' --accountId {} --gas 300000000000000",
+                contract_account_id, caller_account_id, caller_account_id
+            ));
+
+            doc.push(format!(
+                "near call {} vote_pk '{{\"public_key\": {}}}' --accountId {} --gas 300000000000000",
+                contract_account_id, public_key, caller_account_id
+            ));
+
+            doc.push(format!(
+                "near call {} vote_reshared '{{\"epoch\": 1}}' --accountId {} --gas 300000000000000",
                 contract_account_id, caller_account_id
-            );
+            ));
 
-            commands.push(public_key_command.clone());
+            doc.push(commands::proposed_updates_command(
+                &contract_account_id,
+                &caller_account_id,
+            ));
 
-            let derived_pub_key_json = format!(
-                "'{}'",
-                serde_json::to_string(&json!({"path": "test","predecessor": caller_account_id})).unwrap()
-            );
+            doc.push(format!(
+                "near call {} vote_update '{{\"id\": 0}}' --accountId {} --gas 300000000000000",
+                contract_account_id, caller_account_id
+            ));
 
-            let derived_public_key_command = format!(
-                "near call {} derived_public_key {} --accountId {} --gas 300000000000000 --deposit 1",
-                contract_account_id, derived_pub_key_json, caller_account_id
-            );
+            doc.push(format!(
+                "\n## Contract developer helper API\n\n{}\n\n{}",
+                commands::init_command(&contract_account_id, &caller_account_id,),
+                commands::init_running_command(&contract_account_id, &caller_account_id,)
+            ));
 
-            commands.push(derived_public_key_command.clone());
+            doc.push(format!("near view {} migrate", contract_account_id));
 
-            for arg in commands {
+            doc.push(format!("near view {} state", contract_account_id));
+
+            doc.push(format!("near view {} config", contract_account_id));
+
+            doc.push(format!("near view {} version", contract_account_id));
+
+            for arg in doc {
                 file.write_all(arg.as_bytes())?;
                 file.write_all("\n\n".as_bytes())?;
             }
