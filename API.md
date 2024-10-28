@@ -55,10 +55,10 @@ For more details check `User contract API` impl block in the [chain-signatures/c
 
 # Environments
 1. Mainnet: `v1.signer`
-2. Testnet: `v1.sigenr-prod.testnet`
+2. Testnet: `v1.signer-dev.testnet`
 
 # Interact using NEAR CLI 
 
-There is an `Example Commands` in the [chain-signatures/contract/example.md](./chain-signatures/contract/EXAMPLE.md) file.
+There is an `Example Commands` in the [chain-signatures/contract/example.md](./chain-signature/contract/EXAMPLE.md) file.
 
 These commands work for the latest versions of `Near-cli`(4.0.0+). For installing near-cli [[click here]](https://github.com/near/near-cli/tree/v4.0.13?tab=readme-ov-file#setup)
