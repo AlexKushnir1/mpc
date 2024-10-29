@@ -95,27 +95,26 @@ async fn main() -> anyhow::Result<()> {
             let path = "../../chain-signatures/contract/EXAMPLE.md";
             let mut file = File::create(path)?;
             let mut doc: Vec<String> = vec![];
-            let contract_account_id = AccountId::from_str("v1.signer-dev.testnet").unwrap();
-            let caller_account_id = AccountId::from_str("v1.signer-dev.testnet").unwrap();
-            let public_key: PublicKey = "ed25519:J75xXmF7WUPS3xCm3hy2tgwLCKdYM1iJd4BWF8sWVnae"
-                .parse()
-                .unwrap();
+            let contract_account_id = AccountId::from_str("v1.signer-dev.testnet")?;
+            let caller_account_id = AccountId::from_str("v1.signer-dev.testnet")?;
+            let public_key: PublicKey =
+                "ed25519:J75xXmF7WUPS3xCm3hy2tgwLCKdYM1iJd4BWF8sWVnae".parse()?;
 
-            doc.push(format!(
+            doc.push(
                 "# Iteracting with contract using NEAR CLI\nAll data is fake and used for example purposes\nIt's necessary to update script after contract API changes\n## User contract API"
-            ));
+                .to_string()
+            );
 
             doc.push(commands::sing_command(
                 &contract_account_id,
                 &caller_account_id,
-            ));
+            )?);
             doc.push(format!("near view {} public_key", contract_account_id));
 
             doc.push(format!(
                 "near view {} derived_public_key {}",
                 contract_account_id,
-                serde_json::to_string(&json!({"path": "test","predecessor": caller_account_id}))
-                    .unwrap()
+                serde_json::to_string(&json!({"path": "test","predecessor": caller_account_id}))?
             ));
 
             doc.push(format!(
@@ -130,8 +129,8 @@ async fn main() -> anyhow::Result<()> {
 
             doc.push(format!(
                 "\n## Node API\n\n{}\n\n{}",
-                commands::respond_command(&contract_account_id, &caller_account_id,),
-                commands::join_command(&contract_account_id, &caller_account_id,)
+                commands::respond_command(&contract_account_id, &caller_account_id,)?,
+                commands::join_command(&contract_account_id, &caller_account_id,)?
             ));
 
             doc.push(format!(
@@ -157,7 +156,7 @@ async fn main() -> anyhow::Result<()> {
             doc.push(commands::proposed_updates_command(
                 &contract_account_id,
                 &caller_account_id,
-            ));
+            )?);
 
             doc.push(format!(
                 "near call {} vote_update '{{\"id\": 0}}' --accountId {} --gas 300000000000000",
@@ -166,8 +165,8 @@ async fn main() -> anyhow::Result<()> {
 
             doc.push(format!(
                 "\n## Contract developer helper API\n\n{}\n\n{}",
-                commands::init_command(&contract_account_id, &caller_account_id,),
-                commands::init_running_command(&contract_account_id, &caller_account_id,)
+                commands::init_command(&contract_account_id, &caller_account_id,)?,
+                commands::init_running_command(&contract_account_id, &caller_account_id,)?
             ));
 
             doc.push(format!("near view {} migrate", contract_account_id));
