@@ -61,4 +61,4 @@ For more details check `User contract API` impl block in the [chain-signatures/c
 
 There is an `Example Commands` in the [chain-signatures/contract/example.md](./chain-signature/contract/EXAMPLE.md) file.
 
-These commands work for the latest versions of `Near-cli`(4.0.0+). For installing near-cli [[click here]](https://github.com/near/near-cli/tree/v4.0.13?tab=readme-ov-file#setup)
+These commands were tested on [near-cli](https://github.com/near/near-cli) 4.0.0.

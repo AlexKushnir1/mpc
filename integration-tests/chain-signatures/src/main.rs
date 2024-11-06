@@ -25,7 +25,7 @@ enum Cli {
     },
     /// Spin up dependent services but not mpc nodes
     DepServices,
-    /// Example of commands to interact with the contract
+    /// Generate example commands to interact with the contract
     ContractCommands,
 }
 
@@ -97,7 +97,7 @@ async fn main() -> anyhow::Result<()> {
             let mut file = File::create(path)?;
             let mut doc: Vec<String> = vec![];
             let contract_account_id = AccountId::from_str("v1.signer-dev.testnet")?;
-            let caller_account_id = AccountId::from_str("v1.signer-dev.testnet")?;
+            let caller_account_id = AccountId::from_str("caller.testnet")?;
             let public_key: PublicKey =
                 "ed25519:J75xXmF7WUPS3xCm3hy2tgwLCKdYM1iJd4BWF8sWVnae".parse()?;
 
