@@ -55,7 +55,7 @@ For more details check `User contract API` impl block in the [chain-signatures/c
 
 # Environments
 1. Mainnet: `v1.signer`
-2. Testnet: `v1.signer-dev.testnet`
+2. Testnet: `v1.sigenr-prod.testnet`
 
 # Interact using NEAR CLI 
 
