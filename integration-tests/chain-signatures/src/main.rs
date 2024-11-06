@@ -25,7 +25,7 @@ enum Cli {
     },
     /// Spin up dependent services but not mpc nodes
     DepServices,
-    /// Example of commands to interact with the contract
+    /// Generate example commands to interact with the contract
     ContractCommands,
 }
 
